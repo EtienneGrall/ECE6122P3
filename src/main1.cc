@@ -7,14 +7,13 @@
 #include "input_image.cc"
 
 using namespace std;
-//using namespace Complex;
 
 #define NB_THREADS 8
 #define PI 3.14159265358979f
 
 Complex W(const int exponent, const int N)
 {
-	return Complex(cos(2*PI*exponent/N), -1*sin(2*PI*exponent/N))
+	return Complex(cos(2*PI*exponent/N), -1*sin(2*PI*exponent/N));
 }
 
 void DFTRow(Complex *img, Complex *imgTransformed, const int firstRow, const int lastRow, const int N)
@@ -23,10 +22,10 @@ void DFTRow(Complex *img, Complex *imgTransformed, const int firstRow, const int
 	{
 		for (int i = 0; i < N; i++)
 		{
-			imgTransformed[N*r + i] = Complex term();
+			//imgTransformed[N*r + i] = Complex term();
 			for (int k = 0; k < N; k++)
 			{
-				imgTransformed[N*r + i] = imgTransformed[N*r + i] + img[i+k]*W(i*k, N)
+				imgTransformed[N*r + i] = imgTransformed[N*r + i] + img[i+k]*W(i*k, N);
 			}
 		}
 	}
@@ -38,10 +37,10 @@ void DFTCol(Complex *img, Complex *imgTransformed, const int firstCol, const int
 	{
 		for (int i = 0; i < N; i++)
 		{
-			imgTransformed[N*r + i] = Complex term();
+			//imgTransformed[N*r + i] = Complex term();
 			for (int k = 0; k < N; k++)
 			{
-				imgTransformed[N*r + i] = imgTransformed[N*r + i] + img[i+k]*W(i*k, N)
+				imgTransformed[N*r + i] = imgTransformed[N*r + i] + img[i+k]*W(i*k, N);
 			}
 		}
 	}
@@ -49,14 +48,20 @@ void DFTCol(Complex *img, Complex *imgTransformed, const int firstCol, const int
 
 int main (int argc, char** argv)
 {
-	InputImage image(argv[1]);
+	cout << argv[2] << endl;
+	InputImage image(argv[2]);
 
 	const int h = image.get_height();
 	const int w = image.get_width();
     const int imgSize = h * w;
 
     Complex* img = image.get_image_data();
-    Complex imgTransformed[imgSize];
+    Complex *imgTransformed; 
+	imgTransformed = (Complex*)malloc(sizeof(Complex) * imgSize);
+	for (int i = 0; i < imgSize; i++)
+	{
+		imgTransformed[i] = Complex();
+	}
 
     vector<int> nbRowsThread;
 	if (h < NB_THREADS) 
@@ -117,6 +122,6 @@ int main (int argc, char** argv)
 		thr.join();
 	}
 
-	save_image_data(argv[2], imgTransformed, w, h)
+	image.save_image_data(argv[3], imgTransformed, w, h);
     return 0;
 }
