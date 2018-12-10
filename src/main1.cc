@@ -1,7 +1,8 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
-#include <thread>  
+#include <thread>
+#include <stdio.h>
 
 #include "complex.h"
 #include "input_image.cc"
@@ -48,7 +49,6 @@ void DFTCol(Complex *img, Complex *imgTransformed, const int firstCol, const int
 
 int main (int argc, char** argv)
 {
-	cout << argv[2] << endl;
 	InputImage image(argv[2]);
 
 	const int h = image.get_height();
@@ -56,6 +56,7 @@ int main (int argc, char** argv)
     const int imgSize = h * w;
 
     Complex* img = image.get_image_data();
+
     Complex *imgTransformed; 
 	imgTransformed = (Complex*)malloc(sizeof(Complex) * imgSize);
 	for (int i = 0; i < imgSize; i++)
@@ -105,6 +106,8 @@ int main (int argc, char** argv)
 		thr.join();
 	}
 
+	threads.clear();
+
 	for (int i = 0; i < nbRowsThread.size(); i++)
 	{
 			const int begin = (i > 0) ? nbRowsThread[i-1] : 0;
@@ -116,6 +119,7 @@ int main (int argc, char** argv)
 			threads.push_back(move(thr));	
 			}
 	}
+	
 
 	for (thread &thr : threads)
 	{
