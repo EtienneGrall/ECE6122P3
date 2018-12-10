@@ -9,6 +9,7 @@
 #include <sstream>
 #include <iostream>
 #include <cstdlib>
+#include <cstring>
 
 
 InputImage::InputImage(const char* filename) {
@@ -22,9 +23,19 @@ InputImage::InputImage(const char* filename) {
     data = new Complex[w * h];
     for(int r = 0; r < h; ++r) {
         for(int c = 0; c < w; ++c) {
+            std::string value;
             float real;
-            ifs >> real;
-            data[r * w + c] = Complex(real);
+            float imag;
+            ifs >> value;
+            if (value[0] == '('){
+                char *token = std::strtok((char*)value.substr(1, value.size() - 2).c_str(), ",");
+                real = std::stof(token);
+                token = std::strtok(NULL, " ");
+                imag = std::stof(token);
+                data[r * w + c] = Complex(real, imag);
+            } else {
+                data[r * w + c] = Complex(std::stof(value));
+            }
         }
     }
 }

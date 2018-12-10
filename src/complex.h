@@ -30,7 +30,7 @@ public:
         return Complex(real - b.real, imag - b.imag);
     }
 
-     CUDA_HOSTDEV Complex operator*(const Complex& b) const {
+    CUDA_HOSTDEV Complex operator*(const Complex& b) const {
         return Complex(real * b.real  - imag * b.imag, real * b.imag + imag * b.real);
     }
 
