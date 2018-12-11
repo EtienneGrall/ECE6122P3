@@ -23,10 +23,9 @@ void DFTRow(Complex *img, Complex *imgTransformed, const int firstRow, const int
 	{
 		for (int i = 0; i < N; i++)
 		{
-			//imgTransformed[N*r + i] = Complex term();
 			for (int k = 0; k < N; k++)
 			{
-				imgTransformed[N*r + i] = imgTransformed[N*r + i] + img[i+k]*W(i*k, N);
+				imgTransformed[N*r + i] = imgTransformed[N*r + i] + img[N*r + k]*W(i*k, N);
 			}
 		}
 	}
@@ -38,13 +37,40 @@ void DFTCol(Complex *img, Complex *imgTransformed, const int firstCol, const int
 	{
 		for (int i = 0; i < N; i++)
 		{
-			//imgTransformed[N*r + i] = Complex term();
 			for (int k = 0; k < N; k++)
 			{
-				imgTransformed[N*r + i] = imgTransformed[N*r + i] + img[i+k]*W(i*k, N);
+				imgTransformed[N*i + r] = imgTransformed[N*i + r] + img[N*k + r]*W(i*k, N);
 			}
 		}
 	}
+}
+
+vector<int> init(const int N)
+{
+	vector<int> nbPerThreads;
+	if (N < NB_THREADS) 
+	{
+		for (int i = 0; i < N; i++)
+		{
+			nbPerThreads.push_back(i+1);
+		}
+		return nbPerThreads;
+	}
+
+	for (int i = 0; i < NB_THREADS; i++)
+	{
+		nbPerThreads.push_back(N/NB_THREADS);
+		if (i > 0)
+		{
+			nbPerThreads[i] += nbPerThreads[i-1];
+		}
+		if (i < (N%NB_THREADS))
+		{
+			nbPerThreads[i]++;
+		}
+	}
+	return nbPerThreads;
+	
 }
 
 int main (int argc, char** argv)
@@ -64,41 +90,16 @@ int main (int argc, char** argv)
 		imgTransformed[i] = Complex();
 	}
 
-    vector<int> nbRowsThread;
-	if (h < NB_THREADS) 
-	{
-		for (int i = 0; i < h; i++)
-		{
-			nbRowsThread.push_back(i+1);
-		}
-	}
-	else
-	{
-		for (int i = 0; i < NB_THREADS; i++)
-		{
-			nbRowsThread.push_back(h/NB_THREADS);
-			if (i > 0)
-			{
-				nbRowsThread[i] += nbRowsThread[i-1];
-			}
-			if (i < (h%NB_THREADS))
-			{
-				nbRowsThread[i]++;
-			}
-		}
-	}
-
+	vector<int> nbRowsThread = init(h);
     vector<thread> threads;
+
 	for (int i = 0; i < nbRowsThread.size(); i++)
 	{
 			const int begin = (i > 0) ? nbRowsThread[i-1] : 0;
 			const int end = nbRowsThread[i];
 
-			//for (int r = begin; r < end; r++)
-			{
-			thread thr(DFTRow, img, imgTransformed, begin, end, w);
+			thread thr(DFTRow, img, imgTransformed, begin, end, h);
 			threads.push_back(move(thr));	
-			}
 	}
 
 	for (thread &thr : threads)
@@ -107,25 +108,22 @@ int main (int argc, char** argv)
 	}
 
 	threads.clear();
+	vector<int> nbColThread = init(w);
 
-	for (int i = 0; i < nbRowsThread.size(); i++)
+	for (int i = 0; i < nbColThread.size(); i++)
 	{
-			const int begin = (i > 0) ? nbRowsThread[i-1] : 0;
-			const int end = nbRowsThread[i];
+			const int begin = (i > 0) ? nbColThread[i-1] : 0;
+			const int end = nbColThread[i];
 
-			//for (int r = begin; r < end; r++)
-			{
 			thread thr(DFTCol, img, imgTransformed, begin, end, w);
 			threads.push_back(move(thr));	
-			}
 	}
-	
 
 	for (thread &thr : threads)
 	{
 		thr.join();
 	}
-
+	
 	image.save_image_data(argv[3], imgTransformed, w, h);
     return 0;
 }
