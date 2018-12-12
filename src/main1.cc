@@ -14,33 +14,23 @@ using namespace std;
 
 Complex W(const int exponent, const int N)
 {
-	return Complex(cos(2*PI*exponent/N), -1*sin(2*PI*exponent/N));
+	return Complex(cos(2*PI*exponent/N), -sin(2*PI*exponent/N));
 }
 
-void DFTRow(Complex *img, Complex *imgTransformed, const int firstRow, const int lastRow, const int N)
+void DFT1D(Complex *img, Complex *imgTransformed, const int firstRow, const int lastRow, const float N, const bool row, const bool inverse)
 {
+	const float coef = inverse ? -1 : 1;
 	for (int r = firstRow; r < lastRow; r++)
 	{
 		for (int i = 0; i < N; i++)
 		{
+			const int indexOriginal = row ? N*r + i : N*i + r;
 			for (int k = 0; k < N; k++)
 			{
-				imgTransformed[N*r + i] = imgTransformed[N*r + i] + img[N*r + k]*W(i*k, N);
+				const int indexTransformed = row ? N*r + k : N*k + r;
+				imgTransformed[indexOriginal] = imgTransformed[indexOriginal] + img[indexTransformed]*W(coef*i*k, N);
 			}
-		}
-	}
-}
-
-void DFTCol(Complex *img, Complex *imgTransformed, const int firstCol, const int lastCol, const int N)
-{
-	for (int r = firstCol; r < lastCol; r++)
-	{
-		for (int i = 0; i < N; i++)
-		{
-			for (int k = 0; k < N; k++)
-			{
-				imgTransformed[N*i + r] = imgTransformed[N*i + r] + img[N*k + r]*W(i*k, N);
-			}
+			imgTransformed[indexOriginal] = imgTransformed[indexOriginal] * ((inverse) ? Complex(1/N) : 1);
 		}
 	}
 }
@@ -75,6 +65,7 @@ vector<int> init(const int N)
 
 int main (int argc, char** argv)
 {
+	const bool inverse = argv[1][0] == 'r';
 	InputImage image(argv[2]);
 
 	const int h = image.get_height();
@@ -83,11 +74,11 @@ int main (int argc, char** argv)
 
     Complex* img = image.get_image_data();
 
-    Complex *imgTransformed; 
-	imgTransformed = (Complex*)malloc(sizeof(Complex) * imgSize);
+    Complex *imgTransformedRow; 
+	imgTransformedRow = (Complex*)malloc(sizeof(Complex) * imgSize);
 	for (int i = 0; i < imgSize; i++)
 	{
-		imgTransformed[i] = Complex();
+		imgTransformedRow[i] = Complex();
 	}
 
 	vector<int> nbRowsThread = init(h);
@@ -98,7 +89,7 @@ int main (int argc, char** argv)
 			const int begin = (i > 0) ? nbRowsThread[i-1] : 0;
 			const int end = nbRowsThread[i];
 
-			thread thr(DFTRow, img, imgTransformed, begin, end, h);
+			thread thr(DFT1D, img, imgTransformedRow, begin, end, h, true, inverse);
 			threads.push_back(move(thr));	
 	}
 
@@ -110,12 +101,19 @@ int main (int argc, char** argv)
 	threads.clear();
 	vector<int> nbColThread = init(w);
 
+	Complex *imgTransformedCol; 
+	imgTransformedCol = (Complex*)malloc(sizeof(Complex) * imgSize);
+	for (int i = 0; i < imgSize; i++)
+	{
+		imgTransformedCol[i] = Complex();
+	}
+
 	for (int i = 0; i < nbColThread.size(); i++)
 	{
 			const int begin = (i > 0) ? nbColThread[i-1] : 0;
 			const int end = nbColThread[i];
 
-			thread thr(DFTCol, img, imgTransformed, begin, end, w);
+			thread thr(DFT1D, imgTransformedRow, imgTransformedCol, begin, end, w, false, inverse);
 			threads.push_back(move(thr));	
 	}
 
@@ -124,6 +122,6 @@ int main (int argc, char** argv)
 		thr.join();
 	}
 	
-	image.save_image_data(argv[3], imgTransformed, w, h);
+	image.save_image_data(argv[3], imgTransformedCol, w, h);
     return 0;
 }
