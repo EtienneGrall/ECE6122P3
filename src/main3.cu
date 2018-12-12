@@ -20,8 +20,8 @@ __global__ void fourierTransformRow(Complex *img, Complex *imgTemp, int width, i
             index = rowIndex * width + n;
             for (int k = 0; k < width; k++){
                 theta = 2 * PI * n * k / width;
-                Complex term(cos(theta), -sin(theta));
-                imgTemp[index] = imgTemp[index] + img[rowIndex * width + k] * term;
+                Complex twiddle(cos(theta), -sin(theta));
+                imgTemp[index] = imgTemp[index] + img[rowIndex * width + k] * twiddle;
             }
         }
     } 
@@ -37,8 +37,8 @@ __global__ void fourierTransformColumn(Complex *imgTemp, Complex *imgTransformed
             index = n * width + colIndex;            
             for (int k = 0; k < height; k++){
                 theta = 2 * PI * n * k / height;
-                Complex term(cos(theta), -sin(theta));
-                imgTransformed[index] = imgTransformed[index] + imgTemp[k * width + colIndex] * term;
+                Complex twiddle(cos(theta), -sin(theta));
+                imgTransformed[index] = imgTransformed[index] + imgTemp[k * width + colIndex] * twiddle;
             }
         }
     } 
@@ -54,8 +54,8 @@ __global__ void inverseFourierTransformRow(Complex *imgTransformed, Complex *img
             index = rowIndex * width + n;
             for (int k = 0; k < width; k++){
                 theta = 2 * PI * n * k / width;
-                Complex term(cos(theta), sin(theta));
-                imgTemp[index] = imgTemp[index] + imgTransformed[rowIndex * width + k] * term;
+                Complex twiddle(cos(theta), sin(theta));
+                imgTemp[index] = imgTemp[index] + imgTransformed[rowIndex * width + k] * twiddle;
             }
             imgTemp[index].real = imgTemp[index].real / width;
             imgTemp[index].imag = imgTemp[index].imag / width;
@@ -73,8 +73,8 @@ __global__ void inverseFourierTransformColumn(Complex *imgTemp, Complex *img, in
             index = n * width + colIndex;
             for (int k = 0; k < height; k++){
                 theta = 2 * PI * n * k / width;
-                Complex term(cos(theta), sin(theta));
-                img[index] = img[index] + imgTemp[k * width + colIndex] * term;
+                Complex twiddle(cos(theta), sin(theta));
+                img[index] = img[index] + imgTemp[k * width + colIndex] * twiddle;
             }
             img[index].real = img[index].real / height;
             img[index].imag = img[index].imag / height;
