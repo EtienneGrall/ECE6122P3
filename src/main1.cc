@@ -19,7 +19,8 @@ Complex W(const int exponent, const int N)
 
 void DFT1D(Complex *img, Complex *imgTransformed, const int firstRow, const int lastRow, const float N, const bool row, const bool inverse)
 {
-	const float coef = inverse ? -1 : 1;
+	const float coefExp = inverse ? -1 : 1;
+	const Complex coef = inverse ? Complex(1/N) : 1;
 	for (int r = firstRow; r < lastRow; r++)
 	{
 		for (int i = 0; i < N; i++)
@@ -28,9 +29,9 @@ void DFT1D(Complex *img, Complex *imgTransformed, const int firstRow, const int 
 			for (int k = 0; k < N; k++)
 			{
 				const int indexTransformed = row ? N*r + k : N*k + r;
-				imgTransformed[indexOriginal] = imgTransformed[indexOriginal] + img[indexTransformed]*W(coef*i*k, N);
+				imgTransformed[indexOriginal] = imgTransformed[indexOriginal] + img[indexTransformed]*W(coefExp*i*k, N);
 			}
-			imgTransformed[indexOriginal] = imgTransformed[indexOriginal] * ((inverse) ? Complex(1/N) : 1);
+			imgTransformed[indexOriginal] = imgTransformed[indexOriginal] * coef;
 		}
 	}
 }
